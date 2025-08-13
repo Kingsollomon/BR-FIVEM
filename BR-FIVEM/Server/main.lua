@@ -1,8 +1,14 @@
+<<<<<<<< HEAD:BR-FIVEM/Server/main.lua
 local QBox = exports['qbx_core']:GetCoreObject()
 
 local coreName = GetResourceState('qbx_core') == 'started' and 'qbx_core' or 'qb-core'
 local QBox = exports[coreName]:GetCoreObject()
 
+========
+-- BR-FIVEM | server/main.lua
+
+local QBox = BR.GetCore(10000)
+>>>>>>>> a10f4f3 (your message describing the update):Server/main.lua
 local matchActive = false
 local killCounts = {}
 local playerState = {}  -- src => 'alive' | 'spectating'
@@ -17,7 +23,15 @@ local function Announce(text, soundKey)
 end
 
 local function GetPlayers()
-  return QBox.Functions.GetPlayers()
+  if QBox and QBox.Functions and QBox.Functions.GetPlayers then
+    return QBox.Functions.GetPlayers()
+  end
+  -- Fallback: native players
+  local t = {}
+  for _, id in ipairs(GetPlayers()) do
+    t[#t+1] = tonumber(id)
+  end
+  return t
 end
 
 RegisterNetEvent('br:server:StartFromPed', function()
@@ -63,11 +77,24 @@ end
 -- Plane
 RegisterNetEvent('br:server:StartPlaneDrop', function()
   local spawnPt = vector4(-2000.0, 3000.0, Config.PlaneAltitude, 0.0)
-  QBox.Functions.SpawnVehicle(Config.PlaneModel, spawnPt, function(veh)
+  if QBox and QBox.Functions and QBox.Functions.SpawnVehicle then
+    QBox.Functions.SpawnVehicle(Config.PlaneModel, spawnPt, function(veh)
+      SetEntityInvincible(veh, true)
+      SetVehicleForwardSpeed(veh, Config.PlaneSpeed)
+      TriggerClientEvent('br:client:PlaneSpawned', -1, VehToNet(veh))
+    end)
+  else
+    -- Fallback: create server-side vehicle
+    local model = joaat(Config.PlaneModel)
+    if not IsModelInCdimage(model) then print('[BR] Invalid plane model') return end
+    RequestModel(model); while not HasModelLoaded(model) do Wait(0) end
+    local veh = CreateVehicle(model, spawnPt.x, spawnPt.y, spawnPt.z, spawnPt.w, true, true)
+    while not DoesEntityExist(veh) do Wait(0) end
     SetEntityInvincible(veh, true)
     SetVehicleForwardSpeed(veh, Config.PlaneSpeed)
+    SetModelAsNoLongerNeeded(model)
     TriggerClientEvent('br:client:PlaneSpawned', -1, VehToNet(veh))
-  end)
+  end
 end)
 
 -- Loot spawn
@@ -77,7 +104,7 @@ RegisterNetEvent('br:server:StartLoot', function()
       local xOff, yOff = math.random(-50, 50), math.random(-50, 50)
       local coords = vector3(zone.coords.x + xOff, zone.coords.y + yOff, zone.coords.z)
       local category = Config:PickCategory()
-      local rarity = Config:PickRarity(Config:RandomFloat())
+      local rarity = Config:PickRarity()
       local pool = Config.Items[category][rarity]
       local item = pool[math.random(#pool)]
       TriggerClientEvent('br:client:CreateLoot', -1, coords, item, rarity, category)
@@ -85,24 +112,54 @@ RegisterNetEvent('br:server:StartLoot', function()
   end
 end)
 
+<<<<<<<< HEAD:BR-FIVEM/Server/main.lua
 -- Pickups
+========
+-- Pickups (supports ox_inventory or QBox player functions)
+>>>>>>>> a10f4f3 (your message describing the update):Server/main.lua
 RegisterNetEvent('br:server:PickUpLoot', function(itemName)
   local src = source
-  local Player = QBox.Functions.GetPlayer(src)
-  if not Player then return end
-  Player.Functions.AddItem(itemName, 1)
-  TriggerClientEvent('inventory:client:ItemBox', src, { name = itemName }, 'add')
+  if not itemName or type(itemName) ~= 'string' then return end
+
+  -- Prefer ox_inventory if present
+  if GetResourceState('ox_inventory') == 'started' then
+    local ok, err = pcall(function()
+      exports.ox_inventory:AddItem(src, itemName, 1)
+    end)
+    if not ok then print(('[BR] ox_inventory AddItem failed: %s'):format(err or '')) end
+    TriggerClientEvent('inventory:client:ItemBox', src, { name = itemName }, 'add')
+    return
+  end
+
+  -- Fallback to core player functions
+  if QBox and QBox.Functions and QBox.Functions.GetPlayer then
+    local Player = QBox.Functions.GetPlayer(src)
+    if Player and Player.Functions and Player.Functions.AddItem then
+      Player.Functions.AddItem(itemName, 1)
+      TriggerClientEvent('inventory:client:ItemBox', src, { name = itemName }, 'add')
+    end
+  end
 end)
 
 -- Safe zone
-local function RandomPoint()
-  return vector2(math.random(-2500, 2500), math.random(-2500, 2500))
-end
-
+<<<<<<<< HEAD:BR-FIVEM/Server/main.lua
+========
 local function ClearShrinkTimers()
   shrinkTimers = {}
 end
 
+>>>>>>>> a10f4f3 (your message describing the update):Server/main.lua
+local function RandomPoint()
+  return vector2(math.random(-2500, 2500), math.random(-2500, 2500))
+end
+
+<<<<<<<< HEAD:BR-FIVEM/Server/main.lua
+local function ClearShrinkTimers()
+  shrinkTimers = {}
+end
+
+========
+>>>>>>>> a10f4f3 (your message describing the update):Server/main.lua
 local function LerpVector2(a, b, t)
   return vector2(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t)
 end
@@ -145,10 +202,14 @@ function StartSafeZone()
 end
 RegisterNetEvent('br:server:StartSafeZone', StartSafeZone)
 
+<<<<<<<< HEAD:BR-FIVEM/Server/main.lua
 -- Death & transfer
+========
+-- Death & transfer (kept as-is; adjust if using ox_inventory-only)
+>>>>>>>> a10f4f3 (your message describing the update):Server/main.lua
 RegisterNetEvent('br:server:OnPlayerDeath', function(killerId)
   local victim = source
-  local Victim = QBox.Functions.GetPlayer(victim)
+  local Victim = QBox and QBox.Functions and QBox.Functions.GetPlayer and QBox.Functions.GetPlayer(victim)
   if not Victim then return end
 
   if killerId and killerId ~= victim then
@@ -230,6 +291,7 @@ AddEventHandler('playerDropped', function()
   killCounts[src] = nil
 end)
 
+<<<<<<<< HEAD:BR-FIVEM/Server/main.lua
 -- Boot
 AddEventHandler('onResourceStart', function(res)
   if res == GetCurrentResourceName() then
@@ -238,6 +300,26 @@ AddEventHandler('onResourceStart', function(res)
     else
       print('[BR] StartPed mode: waiting for players to use the ped.')
     end
+========
+-- Start-from-ped trigger
+RegisterNetEvent('br:server:StartFromPed', function()
+  local src = source
+  if matchActive then
+    TriggerClientEvent('br:client:Announce', src, 'A match is already in progress.', nil)
+    return
+  end
+  StartPreLobby()
+end)
+
+-- Boot
+AddEventHandler('onResourceStart', function(res)
+  if res ~= GetCurrentResourceName() then return end
+  if not QBox then QBox = BR.GetCore(8000) end
+  if not Config.UseStartPed then
+    StartPreLobby()
+  else
+    print('[BR] StartPed mode active: waiting for players to start the match.')
+>>>>>>>> a10f4f3 (your message describing the update):Server/main.lua
   end
 end)
 

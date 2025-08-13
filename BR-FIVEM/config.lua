@@ -1,3 +1,4 @@
+<<<<<<<< HEAD:BR-FIVEM/config.lua
 -- Start Ped (optional)
 Config.UseStartPed = true
 Config.StartPed = {
@@ -13,6 +14,27 @@ Config.StartPed = {
 }
 
 Config = {}
+========
+-- BR-FIVEM | config.lua
+
+-- Initialize once (prevents wiping values on reload)
+Config = Config or {}
+
+-- Start Ped (optional)
+Config.UseStartPed = true
+Config.StartPed = {
+  model = 's_m_m_bouncer_01',
+  coords = vector4(204.16, -933.52, 30.69, 160.0),
+  blip = {
+    enabled = true,
+    name = 'Battle Royale',
+    sprite = 280,   -- crosshair (widely supported)
+    color  = 46,
+    scale  = 0.8,
+    shortRange = true
+  }
+}
+>>>>>>>> a10f4f3 (your message describing the update):config.lua
 
 -- Plane
 Config.PlaneModel       = 'cuban800'
@@ -33,7 +55,7 @@ Config.Performance = {
   safeZoneDrawInterval = 1500
 }
 
--- Multiple loot zones
+-- Loot zones
 Config.LootZones = {
   { name = 'Pillbox Hill',    coords = vector3(349.05, -592.37, 28.78) },
   { name = 'Airport',         coords = vector3(-1034.6, -2733.6, 13.76) },
@@ -48,7 +70,7 @@ Config.LootZones = {
 -- Loot balance
 Config.LootCountPerZone = 25
 
--- Categories and weights (sum 100)
+-- Categories and weights (sum ≈ 100)
 Config.LootCategories = {
   { category = 'Weapons', weight = 45 },
   { category = 'Ammo',    weight = 25 },
@@ -57,25 +79,78 @@ Config.LootCategories = {
 }
 
 -- Items by category and rarity
+-- Ensure these item names exist in your ox_inventory/data/items.lua
 Config.Items = {
   Weapons = {
-    Common    = { 'weapon_pistol', 'weapon_revolver' },
-    Rare      = { 'weapon_smg', 'weapon_pumpshotgun' },
-    Epic      = { 'weapon_assaultrifle', 'weapon_carbinerifle' },
-    Legendary = { 'weapon_sniperrifle', 'weapon_mg' }
+    -- Handguns and basic gear
+    Common = {
+      'weapon_pistol',
+      'weapon_snspistol',
+      'weapon_combatpistol',
+      'weapon_nightstick',
+      'weapon_stungun'
+    },
+
+    -- AP pistol and early SMGs
+    Rare = {
+      'weapon_appistol',          -- AP Pistol
+      'weapon_snspistol_mk2',
+      'weapon_microsmg',
+      'weapon_machinepistol',
+      'weapon_heavypistol',
+      'weapon_vintagepistol',
+      'weapon_combatpdw',
+      'weapon_specialcarbine'
+    },
+
+    -- Rifles and MK2 mid/high tier
+    Epic = {
+      'weapon_minismg',
+      'weapon_assaultsmg',
+      'weapon_smg_mk2',
+      'weapon_bullpuprifle_mk2',
+      'weapon_carbinerifle',
+      'weapon_carbinerifle_mk2',
+      'weapon_assaultrifle_mk2',
+      'weapon_specialcarbine_mk2'
+    },
+
+    -- Endgame
+    Legendary = {
+      'weapon_marksmanrifle_mk2',
+      'weapon_sniperrifle',
+      'weapon_heavysniper_mk2',
+      'weapon_rpg'
+    }
   },
+
+  -- Ammo items (use your actual ammo item IDs; these align with many ox_inventory setups)
   Ammo = {
-    Common    = { 'pistol_ammo' },
-    Rare      = { 'smg_ammo' },
-    Epic      = { 'rifle_ammo' },
-    Legendary = { 'sniper_ammo' }
+    Common = {
+      'ammo-9'          -- 9mm
+    },
+    Rare = {
+      'ammo-smg',       -- SMG ammo
+      'ammo-9'
+    },
+    Epic = {
+      'ammo-rifle'      -- rifle ammo
+    },
+    Legendary = {
+      'ammo-sniper',    -- sniper ammo
+      'ammo-shotgun'    -- shotgun shells
+    }
   },
+
+  -- Body armor progression
   Armors = {
-    Common    = { 'armour' },
-    Rare      = { 'heavyarmour' },
-    Epic      = { 'armour_advanced' },
-    Legendary = { 'armour_elite' }
+    Common    = { 'armor' },
+    Rare      = { 'heavyarmor' },
+    Epic      = { 'armor_advanced' },
+    Legendary = { 'armor_elite' }
   },
+
+  -- Healing items
   Medkits = {
     Common    = { 'bandage' },
     Rare      = { 'firstaid' },
@@ -84,7 +159,7 @@ Config.Items = {
   }
 }
 
--- Rarity thresholds
+-- Rarity thresholds (cumulative 0..1)
 Config.RarityChances = {
   Common    = 0.60,
   Rare      = 0.85,
@@ -92,6 +167,10 @@ Config.RarityChances = {
   Legendary = 1.00
 }
 
+<<<<<<<< HEAD:BR-FIVEM/config.lua
+========
+-- Utilities
+>>>>>>>> a10f4f3 (your message describing the update):config.lua
 function Config:RandomFloat()
   return math.random()
 end
@@ -105,7 +184,8 @@ function Config:PickCategory()
   return self.LootCategories[#self.LootCategories].category
 end
 
-function Config:PickRarity(roll)
+function Config:PickRarity()
+  local roll = self:RandomFloat()
   if roll <= self.RarityChances.Common then return 'Common' end
   if roll <= self.RarityChances.Rare then return 'Rare' end
   if roll <= self.RarityChances.Epic then return 'Epic' end
